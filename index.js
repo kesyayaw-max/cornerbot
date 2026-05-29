@@ -317,7 +317,7 @@ const slashStructure = {
 };
 
 const sqBuilder = new SlashCommandBuilder()
-  .setName('sq')
+  .setName('cc')
   .setDescription('Cosmic Corner command center');
 
 for (const [groupName, commandNames] of Object.entries(slashStructure)) {
