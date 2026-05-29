@@ -702,9 +702,9 @@ async function registerSlashCommands() {
       ? Routes.applicationGuildCommands(applicationId, process.env.GUILD_ID)
       : Routes.applicationCommands(applicationId);
 
-    console.log(`🔄 Registering /sq slash command${process.env.GUILD_ID ? ' ke guild' : ' secara global'}...`);
+    console.log(`🔄 Registering /cc slash command${process.env.GUILD_ID ? ' ke guild' : ' secara global'}...`);
     await rest.put(route, { body: slashCommands });
-    console.log('✅ Slash command /sq siap!');
+    console.log('✅ Slash command /cc siap!');
   } catch (err) {
     console.error('❌ Gagal register slash command:', err);
   }
@@ -1019,7 +1019,7 @@ client.on('interactionCreate', async (interaction) => {
               fields: selected
                 ? [
                     { name: 'Deskripsi', value: selected.description, inline: false },
-                    { name: 'Quick Buy', value: `\`sq buy ${selected.key}\``, inline: true },
+                    { name: 'Quick Buy', value: `\`cc buy ${selected.key}\``, inline: true },
                     { name: 'Halaman', value: `${(Number(currentPage) || 0) + 1}`, inline: true },
                   ]
                 : [],
@@ -1044,7 +1044,7 @@ client.on('interactionCreate', async (interaction) => {
   }
 
   if (interaction.isChatInputCommand()) {
-    if (interaction.commandName !== 'sq') return;
+    if (interaction.commandName !== 'cc') return;
 
     try {
       await interaction.deferReply();

@@ -38,7 +38,7 @@ module.exports = {
           fields: [
             { name: '📌 Channel Saat Ini', value: current, inline: false },
             { name: '🛠️ Prefix', value: '`voicelog set #channel`\n`voicelog off`', inline: true },
-            { name: '⚡ Slash', value: '`/sq admin voicelog action:set channel:#voice-log`', inline: true },
+            { name: '⚡ Slash', value: '`/cc admin voicelog action:set channel:#voice-log`', inline: true },
           ],
           footer: 'Cosmic Corner Bot • Voice Tracker',
         })],

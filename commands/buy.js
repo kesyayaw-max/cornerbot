@@ -11,7 +11,7 @@ module.exports = {
     const item = ITEM_DEFS[itemKey];
 
     if (!item) {
-      return msg.reply({ embeds: [createGameEmbed({ title: '🛒 Shop', description: 'Item tidak ada. Pakai: `sq buy potion`, `sq buy sword`, atau `sq buy petfood`.', color: COLORS.warning })] });
+      return msg.reply({ embeds: [createGameEmbed({ title: '🛒 Shop', description: 'Item tidak ada. Pakai: `cc buy potion`, `cc buy sword`, atau `cc buy petfood`.', color: COLORS.warning })] });
     }
 
     const art = itemArtAttachment(item);

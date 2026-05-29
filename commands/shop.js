@@ -16,10 +16,10 @@ function buildShopView(category = 'all', ownerId = '0') {
   const art = itemArtAttachment(spotlight);
   const fields = items.map(item => ({
     name: `${item.emoji} ${item.name}`,
-    value: `**${item.price}** coin\n${item.description}\nBeli: \`sq buy ${item.key}\``,
+    value: `**${item.price}** coin\n${item.description}\nBeli: \`cc buy ${item.key}\``,
     inline: true,
   }));
-  fields.push({ name: '✨ Tips', value: '`sq daily`, `sq hunt`, `sq blackjack`, `sq dice`, `sq rps`, `sq dungeon`, `sq quest` buat cari coin tambahan.', inline: false });
+  fields.push({ name: '✨ Tips', value: '`cc daily`, `cc hunt`, `cc blackjack`, `cc dice`, `cc rps`, `cc dungeon`, `cc quest` buat cari coin tambahan.', inline: false });
 
   const select = new StringSelectMenuBuilder()
     .setCustomId(`select:shop:${ownerId}`)

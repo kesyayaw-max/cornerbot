@@ -9,7 +9,7 @@ module.exports = {
       return msg.reply({
         embeds: [createGameEmbed({
           title: '🎵 Cara Pakai Music',
-          description: 'Pakai URL YouTube, URL Spotify, atau judul lagu.\n\nContoh:\n`sq play https://youtu.be/...`\n`sq play https://open.spotify.com/track/...`\n`sq play lofi hip hop`',
+          description: 'Pakai URL YouTube, URL Spotify, atau judul lagu.\n\nContoh:\n`cc play https://youtu.be/...`\n`cc play https://open.spotify.com/track/...`\n`cc play lofi hip hop`',
           color: COLORS.primary,
         })],
       });

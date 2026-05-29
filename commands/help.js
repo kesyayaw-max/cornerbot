@@ -21,7 +21,7 @@ const HELP_PANELS = {
     color: COLORS.success,
     description: 'Panel onboarding buat player baru atau pemain lama yang mau lihat jalur progress tercepat.',
     fields: [
-      { name: '🚀 /sq main start', value: 'Buka dashboard onboarding, checklist, dan shortcut progress utama.', inline: false },
+      { name: '🚀 /cc main start', value: 'Buka dashboard onboarding, checklist, dan shortcut progress utama.', inline: false },
       { name: '🎁 Early Route', value: '`daily` buat modal awal, lanjut `hunt` atau `fishing`, lalu `shop` dan `catch`.', inline: false },
       { name: '⚔️ Mid Route', value: 'Kalau coin dan item sudah cukup, gas `quest`, `dungeon`, `boss`, lalu push `rank`.', inline: false },
       { name: '🏆 Fast Power', value: 'Achievement + level + pet = power score naik lebih cepat.', inline: false },

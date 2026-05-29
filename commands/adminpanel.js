@@ -15,8 +15,8 @@ module.exports = {
         color: COLORS.admin,
         image: attachmentImageUrl(art),
         fields: [
-          { name: '📢 Broadcast', value: '`sq broadcast <pesan>` kirim pengumuman ke semua text channel yang bisa diakses bot.', inline: false },
-          { name: '💸 Custom Cash', value: '`sq admincash <set/add/remove> @user <jumlah>` untuk ubah cash player.', inline: false },
+          { name: '📢 Broadcast', value: '`cc broadcast <pesan>` kirim pengumuman ke semua text channel yang bisa diakses bot.', inline: false },
+          { name: '💸 Custom Cash', value: '`cc admincash <set/add/remove> @user <jumlah>` untuk ubah cash player.', inline: false },
           { name: '🧰 Quick Notes', value: 'Bisa dipakai untuk event, kompensasi bug, reward winner, atau reset ekonomi kecil.', inline: false },
           { name: '👑 Owner Access', value: 'Set `OWNER_ID` di `.env` supaya owner bot juga bisa akses command admin.', inline: false },
         ]

@@ -18,7 +18,7 @@ function buildPetsView(user, ownerId, page = 0) {
     const index = start + offset;
     return {
       name: formatPetLabel(pet, index, index === equipped),
-      value: `Rarity **${rarityIcon(pet.rarity)} ${pet.rarity}**\nLevel **${pet.level}** • EXP **${pet.exp}/50** • Power **${petPower(pet)}**\nGunakan \`sq petequip ${index + 1}\` untuk equip`,
+      value: `Rarity **${rarityIcon(pet.rarity)} ${pet.rarity}**\nLevel **${pet.level}** • EXP **${pet.exp}/50** • Power **${petPower(pet)}**\nGunakan \`cc petequip ${index + 1}\` untuk equip`,
       inline: false,
     };
   });
@@ -72,7 +72,7 @@ module.exports = {
       return msg.reply({
         embeds: [createGameEmbed({
           title: '🐾 Koleksi Pet',
-          description: 'Kamu belum punya pet. Gunakan `sq catch` untuk menangkap pet pertamamu.',
+          description: 'Kamu belum punya pet. Gunakan `cc catch` untuk menangkap pet pertamamu.',
           color: COLORS.warning,
           footer: 'Cosmic Corner Bot • Pet Collection',
         })],

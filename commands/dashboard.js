@@ -15,7 +15,7 @@ function buildMissionBoard(user) {
       emoji: '🎁',
       title: 'Claim modal harian',
       done: (stats.dailyClaims || 0) >= 1,
-      guide: '/sq main daily',
+      guide: '/cc main daily',
       reward: 'Coin boost + momentum awal',
     },
     {
@@ -23,7 +23,7 @@ function buildMissionBoard(user) {
       emoji: '🏹',
       title: 'Farm 10 hunt',
       done: (stats.huntCount || 0) >= 10,
-      guide: '/sq game hunt',
+      guide: '/cc game hunt',
       reward: 'Achievement + coin farming',
     },
     {
@@ -31,7 +31,7 @@ function buildMissionBoard(user) {
       emoji: '🎣',
       title: 'Fishing 10x',
       done: (stats.fishingCount || 0) >= 10,
-      guide: '/sq game fishing',
+      guide: '/cc game fishing',
       reward: 'Progress item & EXP',
     },
     {
@@ -39,7 +39,7 @@ function buildMissionBoard(user) {
       emoji: '🏰',
       title: 'Menang dungeon 3x',
       done: (stats.dungeonWins || 0) >= 3,
-      guide: '/sq game dungeon',
+      guide: '/cc game dungeon',
       reward: 'Loot + power growth',
     },
     {
@@ -47,7 +47,7 @@ function buildMissionBoard(user) {
       emoji: '🐾',
       title: 'Kumpulkan 3 pet',
       done: (Array.isArray(user.pets) ? user.pets.length : 0) >= 3,
-      guide: '/sq pet catch',
+      guide: '/cc pet catch',
       reward: 'Power score naik',
     },
     {

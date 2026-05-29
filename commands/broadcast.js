@@ -45,7 +45,7 @@ module.exports = {
 
     if (!message) {
       return msg.reply({
-        content: '❌ Isi pesan broadcast kosong.\nContoh: `sq broadcast <#channel> --everyone Halo semua!`',
+        content: '❌ Isi pesan broadcast kosong.\nContoh: `cc broadcast <#channel> --everyone Halo semua!`',
         ephemeral: true,
       });
     }

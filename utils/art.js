@@ -118,7 +118,7 @@ function itemArtAttachment(item) {
       emoji: item.emoji || '🎁',
       theme: 'Item',
       badge: `${item.price || 0} Coin`,
-      accent: `Beli dengan sq buy ${item.key || 'item'}`,
+      accent: `Beli dengan cc buy ${item.key || 'item'}`,
     })
   );
 }

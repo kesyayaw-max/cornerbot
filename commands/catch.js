@@ -29,7 +29,7 @@ module.exports = {
           { name: '✨ Species', value: `${pet.name}`, inline: true },
           { name: '📦 Total Pet', value: `${u.pets.length}`, inline: true },
           { name: '⭐ Level', value: `${u.level}`, inline: true },
-          { name: '👑 Status', value: u.pets.length === 1 ? 'Auto jadi main pet' : 'Gunakan `sq petequip` untuk ganti', inline: false }
+          { name: '👑 Status', value: u.pets.length === 1 ? 'Auto jadi main pet' : 'Gunakan `cc petequip` untuk ganti', inline: false }
         ]
       })],
       files: [art],

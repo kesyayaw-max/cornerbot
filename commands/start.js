@@ -12,27 +12,27 @@ function buildChecklist(user) {
     {
       done: (stats.dailyClaims || 0) >= 1,
       label: 'Claim daily pertama',
-      guide: '`/sq main daily`',
+      guide: '`/cc main daily`',
     },
     {
       done: (stats.huntCount || 0) >= 1,
       label: 'Coba hunt sekali',
-      guide: '`/sq game hunt`',
+      guide: '`/cc game hunt`',
     },
     {
       done: (stats.fishingCount || 0) >= 1,
       label: 'Coba fishing sekali',
-      guide: '`/sq game fishing`',
+      guide: '`/cc game fishing`',
     },
     {
       done: (Array.isArray(user.pets) ? user.pets.length : 0) >= 1,
       label: 'Tangkap 1 pet',
-      guide: '`/sq pet catch`',
+      guide: '`/cc pet catch`',
     },
     {
       done: (user.inventory || []).length >= 1,
       label: 'Punya 1 item',
-      guide: '`/sq main buy potion`',
+      guide: '`/cc main buy potion`',
     },
     {
       done: (user.level || 1) >= 3,
