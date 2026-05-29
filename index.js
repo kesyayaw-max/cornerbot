@@ -316,12 +316,12 @@ const slashStructure = {
   music: ['play', 'queue', 'nowplaying', 'skip', 'loop', 'stop', 'volume'],
 };
 
-const sqBuilder = new SlashCommandBuilder()
+const ccBuilder = new SlashCommandBuilder()
   .setName('cc')
   .setDescription('Cosmic Corner command center');
 
 for (const [groupName, commandNames] of Object.entries(slashStructure)) {
-  sqBuilder.addSubcommandGroup((group) => {
+  ccBuilder.addSubcommandGroup((group) => {
     group.setName(groupName).setDescription(`Menu ${groupName}`);
     for (const commandName of commandNames) {
       group.addSubcommand((sub) =>
@@ -335,7 +335,7 @@ for (const [groupName, commandNames] of Object.entries(slashStructure)) {
   });
 }
 
-const slashCommands = [sqBuilder.toJSON()];
+const slashCommands = [ccBuilder.toJSON()];
 const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
 function getMessageCommand(content) {
@@ -349,10 +349,10 @@ function getMessageCommand(content) {
     return { cmd: parts.shift().toLowerCase(), args: parts };
   }
 
-  if (/^sq\s+/i.test(trimmed)) {
-    const withoutSq = trimmed.replace(/^sq\s+/i, '').trim();
-    if (!withoutSq) return null;
-    const parts = withoutSq.split(/ +/);
+  if (/^cc\s+/i.test(trimmed)) {
+    const withoutCc = trimmed.replace(/^cc\s+/i, '').trim();
+    if (!withoutCc) return null;
+    const parts = withoutCc.split(/ +/);
     return { cmd: parts.shift().toLowerCase(), args: parts };
   }
 
