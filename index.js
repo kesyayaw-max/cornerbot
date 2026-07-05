@@ -749,6 +749,51 @@ mongoose.connection.on('error', (err) => {
   console.error('❌ Mongoose error:', err);
 });
 
+// Re-sync voice sessions after a bot restart, WITHOUT disconnecting anyone.
+// Anyone already sitting in a voice channel is treated as if they just joined:
+// their session starts counting again from right now.
+function seedVoiceSessionsOnReady() {
+  const now = Date.now();
+  let seeded = 0;
+
+  for (const guild of client.guilds.cache.values()) {
+    for (const state of guild.voiceStates.cache.values()) {
+      const member = state.member;
+      if (!member || member.user?.bot) continue;
+      if (!state.channelId) continue;
+
+      const sessionKey = `${guild.id}:${member.id}`;
+      if (voiceSessions.has(sessionKey)) continue;
+
+      voiceSessions.set(sessionKey, {
+        channelId: state.channelId,
+        startTime: now,
+        paused: true,
+        pausedAt: now,
+        totalPaused: 0,
+        activeBuckets: { '2': 0, '3': 0, '4': 0, '5': 0 },
+        currentTier: '0',
+        lastTierAt: now,
+      });
+      seeded++;
+    }
+  }
+
+  // After seeding, immediately re-check pause/active state per channel
+  // (e.g. resume counting right away for channels that already have 2+ people).
+  for (const guild of client.guilds.cache.values()) {
+    for (const channel of guild.channels.cache.values()) {
+      if (channel?.isVoiceBased?.() && channel.members?.size) {
+        syncChannelSessionPauses(channel, now);
+      }
+    }
+  }
+
+  if (seeded > 0) {
+    console.log(`🎧 Voice session di-sync ulang untuk ${seeded} member yang sudah di voice channel.`);
+  }
+}
+
 client.on('clientReady', async () => {
   console.log(`🤖 Login sebagai ${client.user.tag}`);
 
@@ -758,6 +803,7 @@ client.on('clientReady', async () => {
 
   await registerSlashCommands();
   await syncStoredUserProfiles();
+  seedVoiceSessionsOnReady();
 
   const activities = [
     { name: 'Cosmic Corner Bot!🔥', type: 0 },
@@ -1313,8 +1359,15 @@ const User = require('./models/User');
 const path = require('path');
 const apiApp = express();
 
-// Serve the voice leaderboard website (public/index.html)
+// Serve the multi-page dashboard website (public/*.html + public/assets)
 apiApp.use(express.static(path.join(__dirname, 'public')));
+
+const DASHBOARD_PAGES = ['voice', 'coin', 'level', 'pets'];
+for (const page of DASHBOARD_PAGES) {
+  apiApp.get(`/${page}`, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', `${page}.html`));
+  });
+}
 
 function formatVoiceTime(minutes = 0) {
   const total = Math.floor(minutes); // buang desimal
@@ -1330,6 +1383,10 @@ function getMedal(index) {
   return `#${index + 1}`;
 }
 
+function displayName(u) {
+  return u.displayName || u.username || (u.userId ? `User ${String(u.userId).slice(-4)}` : 'Unknown');
+}
+
 async function buildVoiceLeaderboardPayload() {
   const users = await User.find({
     'voice.totalMinutes': { $gt: 0 },
@@ -1342,7 +1399,7 @@ async function buildVoiceLeaderboardPayload() {
     rank: i + 1,
     medal: getMedal(i),
     userId: u.userId,
-    name: u.displayName || u.username || (u.userId ? `User ${String(u.userId).slice(-4)}` : 'Unknown'),
+    name: displayName(u),
     avatar: u.avatar || null,
     time: formatVoiceTime(u.voice?.totalMinutes || 0),
     totalMinutes: u.voice?.totalMinutes || 0,
@@ -1351,15 +1408,100 @@ async function buildVoiceLeaderboardPayload() {
   }));
 
   return {
-    ok: true,
-    source: 'botsteakbeta2',
-    updatedAt: new Date().toISOString(),
     leaderboard,
     podium: leaderboard.slice(0, 3),
     insights: {
       topTime: leaderboard[0]?.time || '0j 0m',
       topXp: leaderboard[0]?.xp || 0,
       topCoins: leaderboard[0]?.coins || 0,
+    },
+  };
+}
+
+async function buildCoinLeaderboardPayload() {
+  const users = await User.find({ coin: { $gt: 0 } })
+    .sort({ coin: -1 })
+    .limit(10)
+    .lean();
+
+  const leaderboard = users.map((u, i) => ({
+    rank: i + 1,
+    medal: getMedal(i),
+    userId: u.userId,
+    name: displayName(u),
+    avatar: u.avatar || null,
+    coin: u.coin || 0,
+    level: u.level || 1,
+  }));
+
+  return {
+    leaderboard,
+    podium: leaderboard.slice(0, 3),
+    insights: {
+      topCoin: leaderboard[0]?.coin || 0,
+      totalPlayers: await User.countDocuments({ coin: { $gt: 0 } }),
+    },
+  };
+}
+
+async function buildLevelLeaderboardPayload() {
+  const users = await User.find({ level: { $gt: 0 } })
+    .sort({ level: -1, exp: -1 })
+    .limit(10)
+    .lean();
+
+  const leaderboard = users.map((u, i) => ({
+    rank: i + 1,
+    medal: getMedal(i),
+    userId: u.userId,
+    name: displayName(u),
+    avatar: u.avatar || null,
+    level: u.level || 1,
+    exp: u.exp || 0,
+    wins: u.wins || 0,
+  }));
+
+  return {
+    leaderboard,
+    podium: leaderboard.slice(0, 3),
+    insights: {
+      topLevel: leaderboard[0]?.level || 1,
+      topExp: leaderboard[0]?.exp || 0,
+    },
+  };
+}
+
+async function buildPetLeaderboardPayload() {
+  const users = await User.find({ 'pets.0': { $exists: true } }).lean();
+
+  const withPetInfo = users.map((u) => {
+    const pets = u.pets || [];
+    const strongest = pets.reduce((best, p) => (!best || (p.level || 1) > (best.level || 1) ? p : best), null);
+    return {
+      userId: u.userId,
+      name: displayName(u),
+      avatar: u.avatar || null,
+      petCount: pets.length,
+      topPetName: strongest?.name || '-',
+      topPetRarity: strongest?.rarity || '-',
+      topPetEmoji: strongest?.emoji || '🐾',
+      topPetLevel: strongest?.level || 1,
+    };
+  });
+
+  withPetInfo.sort((a, b) => b.petCount - a.petCount || b.topPetLevel - a.topPetLevel);
+  const leaderboard = withPetInfo.slice(0, 10).map((u, i) => ({
+    rank: i + 1,
+    medal: getMedal(i),
+    ...u,
+  }));
+
+  return {
+    leaderboard,
+    podium: leaderboard.slice(0, 3),
+    insights: {
+      topPetCount: leaderboard[0]?.petCount || 0,
+      totalTrainers: withPetInfo.length,
     },
   };
 }
@@ -1376,23 +1518,38 @@ apiApp.get('/health', (req, res) => {
 apiApp.get('/api/leaderboard/voice', async (req, res) => {
   try {
     if (!mongoReady) {
-      return res.status(503).json({
-        ok: false,
-        error: 'MongoDB belum tersambung',
-        leaderboard: [],
-      });
+      return res.status(503).json({ ok: false, error: 'MongoDB belum tersambung', leaderboard: [] });
     }
-
     const payload = await buildVoiceLeaderboardPayload();
-    return res.json(payload);
+    return res.json({ ok: true, source: 'botsteakbeta2', updatedAt: new Date().toISOString(), ...payload });
   } catch (err) {
     console.error('API ERROR:', err);
-    return res.status(500).json({
-      ok: false,
-      error: 'API error',
-      message: err.message,
-      leaderboard: [],
+    return res.status(500).json({ ok: false, error: 'API error', message: err.message, leaderboard: [] });
+  }
+});
+
+apiApp.get('/api/leaderboard/all', async (req, res) => {
+  try {
+    if (!mongoReady) {
+      return res.status(503).json({ ok: false, error: 'MongoDB belum tersambung' });
+    }
+
+    const [voice, coin, level, pets] = await Promise.all([
+      buildVoiceLeaderboardPayload(),
+      buildCoinLeaderboardPayload(),
+      buildLevelLeaderboardPayload(),
+      buildPetLeaderboardPayload(),
+    ]);
+
+    return res.json({
+      ok: true,
+      source: 'botsteakbeta2',
+      updatedAt: new Date().toISOString(),
+      categories: { voice, coin, level, pets },
     });
+  } catch (err) {
+    console.error('API ERROR:', err);
+    return res.status(500).json({ ok: false, error: 'API error', message: err.message });
   }
 });
 
