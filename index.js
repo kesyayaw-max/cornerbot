@@ -1310,7 +1310,11 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
 const express = require('express');
 const User = require('./models/User');
 
+const path = require('path');
 const apiApp = express();
+
+// Serve the voice leaderboard website (public/index.html)
+apiApp.use(express.static(path.join(__dirname, 'public')));
 
 function formatVoiceTime(minutes = 0) {
   const total = Math.floor(minutes); // buang desimal
