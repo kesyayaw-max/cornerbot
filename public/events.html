@@ -59,6 +59,20 @@
     </footer>
   </div>
 
+  <div class="lightbox" id="eventLightbox" aria-hidden="true">
+    <div class="lightbox-backdrop" data-close="1"></div>
+    <div class="lightbox-panel">
+      <button class="lightbox-close" data-close="1" aria-label="Tutup">✕</button>
+      <img class="lightbox-img" id="lightboxImg" alt="" />
+      <div class="lightbox-body">
+        <div class="lightbox-date" id="lightboxDate"></div>
+        <h2 class="lightbox-title" id="lightboxTitle"></h2>
+        <p class="lightbox-desc" id="lightboxDesc"></p>
+        <div class="lightbox-meta" id="lightboxMeta"></div>
+      </div>
+    </div>
+  </div>
+
 <script src="/assets/dashboard.js"></script>
 <script>initEventsPage();</script>
 </body>
