@@ -45,6 +45,53 @@ const {
   toggleLoop,
   pauseResume,
   adjustVolume,
+  queueView,const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first');
+dns.setServers(['1.1.1.1', '8.8.8.8']);
+
+require('dotenv').config();
+
+process.env.DISCORD_DISABLE_VOICE_CONNECTION_TIMEOUT = 'true';
+
+const fs = require('fs');
+const mongoose = require('mongoose');
+mongoose.set('bufferCommands', false);
+
+const {
+  Client,
+  GatewayIntentBits,
+  Collection,
+  REST,
+  Routes,
+  SlashCommandBuilder,
+  MessageFlags,
+} = require('discord.js');
+
+const { generateDependencyReport } = require('@discordjs/voice');
+const { createGameEmbed, COLORS } = require('./utils/theme');
+
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildVoiceStates,
+    GatewayIntentBits.GuildMembers, // dibutuhkan buat halaman Struktur Tim (baca role member)
+  ],
+});
+
+client.commands = new Collection();
+
+let mongoReady = false;
+const GuildConfig = require('./models/GuildConfig');
+const voiceSessions = new Map();
+
+const {
+  skip,
+  stop,
+  toggleLoop,
+  pauseResume,
+  adjustVolume,
   queueView,
   nowPlaying,
 } = require('./utils/music');
@@ -1589,6 +1636,46 @@ async function buildTeamPayload() {
   return data;
 }
 
+async function buildStatsPayload() {
+  const guild = process.env.GUILD_ID
+    ? client.guilds.cache.get(process.env.GUILD_ID)
+    : client.guilds.cache.first();
+
+  const [agg] = await User.aggregate([
+    {
+      $group: {
+        _id: null,
+        totalPlayers: { $sum: 1 },
+        totalCoin: { $sum: '$coin' },
+        totalVoiceMinutes: { $sum: '$voice.totalMinutes' },
+        totalPets: { $sum: { $size: { $ifNull: ['$pets', []] } } },
+      },
+    },
+  ]);
+
+  return {
+    memberCount: guild?.memberCount || 0,
+    guildName: guild?.name || null,
+    totalPlayers: agg?.totalPlayers || 0,
+    totalCoin: agg?.totalCoin || 0,
+    totalVoiceHours: Math.floor((agg?.totalVoiceMinutes || 0) / 60),
+    totalPets: agg?.totalPets || 0,
+  };
+}
+
+apiApp.get('/api/stats', async (req, res) => {
+  try {
+    if (!mongoReady) {
+      return res.status(503).json({ ok: false, error: 'MongoDB belum tersambung' });
+    }
+    const payload = await buildStatsPayload();
+    return res.json({ ok: true, updatedAt: new Date().toISOString(), ...payload });
+  } catch (err) {
+    console.error('API ERROR:', err);
+    return res.status(500).json({ ok: false, error: 'API error', message: err.message });
+  }
+});
+
 apiApp.get('/health', (req, res) => {
   res.json({
     ok: true,
@@ -1657,6 +1744,11 @@ apiApp.get('/api/team', async (req, res) => {
     console.error('API ERROR:', err);
     return res.status(500).json({ ok: false, error: 'API error', message: err.message, tiers: [] });
   }
+});
+
+// Fallback: unknown routes get the themed 404 page instead of Express's default
+apiApp.use((req, res) => {
+  res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
 });
 
 let apiServerStarted = false;
