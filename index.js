@@ -29,6 +29,7 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildVoiceStates,
+    GatewayIntentBits.GuildMembers, // dibutuhkan buat halaman Struktur Tim (baca role member)
   ],
 });
 
@@ -1355,6 +1356,8 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
 // ===== WEBSITE 1:1 DISCORD LEADERBOARD API =====
 const express = require('express');
 const User = require('./models/User');
+const Event = require('./models/Event');
+const { ROLE_TIERS, roleIdsFor } = require('./utils/roles');
 
 const path = require('path');
 const apiApp = express();
@@ -1362,7 +1365,7 @@ const apiApp = express();
 // Serve the multi-page dashboard website (public/*.html + public/assets)
 apiApp.use(express.static(path.join(__dirname, 'public')));
 
-const DASHBOARD_PAGES = ['voice', 'coin', 'level', 'pets'];
+const DASHBOARD_PAGES = ['voice', 'coin', 'level', 'pets', 'events', 'team'];
 for (const page of DASHBOARD_PAGES) {
   apiApp.get(`/${page}`, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', `${page}.html`));
@@ -1506,6 +1509,86 @@ async function buildPetLeaderboardPayload() {
   };
 }
 
+async function buildEventsPayload() {
+  const events = await Event.find({}).sort({ date: 1 }).lean();
+  const now = Date.now();
+
+  const mapped = events.map((e) => ({
+    id: e._id.toString(),
+    title: e.title,
+    description: e.description,
+    date: e.date,
+    location: e.location || '',
+    image: e.image || null,
+    createdByName: e.createdByName || 'Admin',
+    isPast: new Date(e.date).getTime() < now,
+  }));
+
+  return {
+    upcoming: mapped.filter((e) => !e.isPast),
+    past: mapped.filter((e) => e.isPast).reverse(),
+  };
+}
+
+// Cache singkat buat data tim, biar gak spam guild.members.fetch() tiap request
+let teamCache = { data: null, at: 0 };
+const TEAM_CACHE_MS = 60_000;
+
+async function buildTeamPayload() {
+  if (teamCache.data && Date.now() - teamCache.at < TEAM_CACHE_MS) {
+    return teamCache.data;
+  }
+
+  const guild = process.env.GUILD_ID
+    ? client.guilds.cache.get(process.env.GUILD_ID)
+    : client.guilds.cache.first();
+
+  if (!guild) {
+    const empty = { tiers: [], guildName: null };
+    teamCache = { data: empty, at: Date.now() };
+    return empty;
+  }
+
+  await guild.members.fetch().catch(() => {});
+
+  const assignedIds = new Set();
+  const tiers = [];
+
+  for (const tier of ROLE_TIERS) {
+    const roleIds = roleIdsFor(tier);
+    if (!roleIds.length) continue;
+
+    const matched = guild.members.cache.filter(
+      (m) => !assignedIds.has(m.id) && roleIds.some((id) => m.roles.cache.has(id))
+    );
+    if (!matched.size) continue;
+
+    const members = [...matched.values()]
+      .map((m) => {
+        assignedIds.add(m.id);
+        return {
+          userId: m.id,
+          name: m.displayName || m.user.username,
+          username: m.user.username,
+          avatar: m.displayAvatarURL({ size: 256 }) || m.user.displayAvatarURL({ size: 256 }),
+        };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    tiers.push({
+      key: tier.key,
+      label: tier.label,
+      icon: tier.icon,
+      color: tier.color,
+      members,
+    });
+  }
+
+  const data = { tiers, guildName: guild.name };
+  teamCache = { data, at: Date.now() };
+  return data;
+}
+
 apiApp.get('/health', (req, res) => {
   res.json({
     ok: true,
@@ -1550,6 +1633,29 @@ apiApp.get('/api/leaderboard/all', async (req, res) => {
   } catch (err) {
     console.error('API ERROR:', err);
     return res.status(500).json({ ok: false, error: 'API error', message: err.message });
+  }
+});
+
+apiApp.get('/api/events', async (req, res) => {
+  try {
+    if (!mongoReady) {
+      return res.status(503).json({ ok: false, error: 'MongoDB belum tersambung', upcoming: [], past: [] });
+    }
+    const payload = await buildEventsPayload();
+    return res.json({ ok: true, updatedAt: new Date().toISOString(), ...payload });
+  } catch (err) {
+    console.error('API ERROR:', err);
+    return res.status(500).json({ ok: false, error: 'API error', message: err.message, upcoming: [], past: [] });
+  }
+});
+
+apiApp.get('/api/team', async (req, res) => {
+  try {
+    const payload = await buildTeamPayload();
+    return res.json({ ok: true, updatedAt: new Date().toISOString(), ...payload });
+  } catch (err) {
+    console.error('API ERROR:', err);
+    return res.status(500).json({ ok: false, error: 'API error', message: err.message, tiers: [] });
   }
 });
 
