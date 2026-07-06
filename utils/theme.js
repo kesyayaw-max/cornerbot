@@ -1,4 +1,3 @@
-
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { bar } = require('./embed');
 const { expNeeded } = require('./level');
@@ -45,6 +44,17 @@ function createGameEmbed({
   if (thumbnail) embed.setThumbnail(thumbnail);
   if (image) embed.setImage(image);
   return embed;
+}
+
+function createLinkButton(url, label, emoji) {
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setURL(url)
+      .setLabel(label)
+      .setStyle(ButtonStyle.Link)
+      .setEmoji(emoji || undefined)
+  );
+  return [row];
 }
 
 function createActionButtons(buttons = []) {
@@ -161,6 +171,7 @@ module.exports = {
   createStatCard,
   rarityIcon,
   createActionButtons,
+  createLinkButton,
   quickMenuButtons,
   petThumbnail,
   itemDisplay,
