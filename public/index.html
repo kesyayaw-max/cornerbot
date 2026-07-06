@@ -12,6 +12,12 @@
 <link rel="stylesheet" href="/assets/styles.css">
 </head>
 <body>
+  <div class="bg-orbs" aria-hidden="true">
+    <span class="orb orb-1"></span>
+    <span class="orb orb-2"></span>
+    <span class="orb orb-3"></span>
+  </div>
+
   <div class="wrap">
     <nav class="topnav">
       <a class="brand" href="/"><img src="/assets/favicon.svg" alt="logo"/> Cosmic Corner</a>
@@ -24,6 +30,9 @@
         <a class="nav-tab" href="/events" style="--tab-color:#fb923c">📅 Events</a>
         <a class="nav-tab" href="/team" style="--tab-color:#c084fc">👑 Tim</a>
       </div>
+      <a class="btn-invite btn-invite-nav" href="https://discord.gg/cosmiccorner" target="_blank" rel="noopener">
+        <span class="btn-invite-icon">🎮</span> Join Server
+      </a>
     </nav>
 
     <header class="hero">
@@ -35,13 +44,50 @@
         <span>•</span>
         <span id="updatedAt">-</span>
       </div>
+      <a class="btn-invite btn-invite-hero" href="https://discord.gg/cosmiccorner" target="_blank" rel="noopener">
+        <span class="btn-invite-icon">🎮</span> Gabung Discord Cosmic Corner
+      </a>
     </header>
+
+    <section class="about-section" id="about">
+      <span class="section-badge">✦ Cerita Kami</span>
+      <h2 class="about-title">Dari Nongkrong Biasa, Jadi Komunitas</h2>
+      <p class="about-lead">
+        Cosmic Corner nggak lahir dari rencana besar. Semuanya berawal dari beberapa orang yang suka ngumpul
+        bareng — ngobrol santai, main game, sekadar nongkrong tanpa agenda. Dari kebiasaan itu, muncul satu
+        keinginan yang sama: menjadikan server ini bukan cuma tempat kumpul biasa, tapi komunitas yang sehat,
+        nyaman, dan terbuka buat siapa aja yang mau gabung.
+      </p>
+
+      <div class="story-grid">
+        <div class="story-card">
+          <span class="story-icon">🌱</span>
+          <h3>Awal Mula</h3>
+          <p>Sekumpulan teman yang suka nongkrong bareng, tanpa struktur — cuma modal keakraban dan waktu luang.</p>
+        </div>
+        <div class="story-card">
+          <span class="story-icon">🧭</span>
+          <h3>Titik Balik</h3>
+          <p>Muncul niat buat serius membangun server jadi komunitas yang sehat, bukan sekadar tempat mabar.</p>
+        </div>
+        <div class="story-card">
+          <span class="story-icon">🚀</span>
+          <h3>Sekarang</h3>
+          <p>Cosmic Corner tumbuh jadi rumah buat siapa aja yang mau ngobrol, main, dan berkembang bareng.</p>
+        </div>
+      </div>
+    </section>
 
     <div class="hub-grid" id="hubGrid">
       <div class="state-box" style="grid-column:1/-1"><div class="spinner"></div>Memuat data dashboard...</div>
     </div>
 
-    <footer>Cosmic Corner Bot • Dashboard Peringkat Member</footer>
+    <footer>
+      Cosmic Corner Bot • Dashboard Peringkat Member
+      <div class="footer-invite">
+        <a href="https://discord.gg/cosmiccorner" target="_blank" rel="noopener">discord.gg/cosmiccorner ↗</a>
+      </div>
+    </footer>
   </div>
 
 <script src="/assets/dashboard.js"></script>
