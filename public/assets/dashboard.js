@@ -346,17 +346,72 @@ function initEventsPage(){
   const content = document.getElementById('content');
   const statusText = document.getElementById('statusText');
   const updatedAtEl = document.getElementById('updatedAt');
+  const lightbox = document.getElementById('eventLightbox');
+  const lightboxImg = document.getElementById('lightboxImg');
+  const lightboxTitle = document.getElementById('lightboxTitle');
+  const lightboxDesc = document.getElementById('lightboxDesc');
+  const lightboxDate = document.getElementById('lightboxDate');
+  const lightboxMeta = document.getElementById('lightboxMeta');
+
+  let eventsById = {};
+
+  function openLightbox(id){
+    const e = eventsById[id];
+    if (!e) return;
+    if (e.image) {
+      lightboxImg.src = e.image;
+      lightboxImg.style.display = 'block';
+    } else {
+      lightboxImg.style.display = 'none';
+    }
+    lightboxTitle.textContent = e.title;
+    lightboxDesc.textContent = e.description;
+    lightboxDate.textContent = (e.isPast ? '✅ Selesai • ' : '📅 ') + formatEventDate(e.date);
+    lightboxMeta.textContent = `Dibuat oleh ${e.createdByName || 'Admin'}`;
+    lightbox.classList.add('active');
+    lightbox.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox(){
+    lightbox.classList.remove('active');
+    lightbox.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  lightbox.addEventListener('click', (e) => {
+    if (e.target.dataset.close) closeLightbox();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeLightbox();
+  });
+
+  content.addEventListener('click', (e) => {
+    const card = e.target.closest('.event-card');
+    if (card && card.dataset.eventId) openLightbox(card.dataset.eventId);
+  });
+  content.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const card = e.target.closest('.event-card');
+    if (card && card.dataset.eventId) { e.preventDefault(); openLightbox(card.dataset.eventId); }
+  });
 
   function eventCard(e, isPast){
-    const bannerHtml = e.image ? `<img class="event-banner" src="${e.image}" alt="${escapeHtml(e.title)}" onerror="this.style.display='none'"/>` : '';
+    const bannerHtml = e.image ? `
+      <div class="event-banner-wrap">
+        <div class="event-banner-bg" style="background-image:url('${e.image}')"></div>
+        <img class="event-banner" src="${e.image}" alt="${escapeHtml(e.title)}" onerror="this.closest('.event-banner-wrap').style.display='none'"/>
+      </div>
+    ` : '';
     return `
-      <div class="event-card ${isPast ? 'is-past' : ''}">
+      <div class="event-card ${isPast ? 'is-past' : ''}" data-event-id="${e.id}" tabindex="0" role="button" aria-label="Lihat detail ${escapeHtml(e.title)}">
         ${bannerHtml}
         <div class="event-body">
           <div class="event-date-badge">${isPast ? '✅ Selesai' : '📅'} ${formatEventDate(e.date)}</div>
           <div class="event-title">${escapeHtml(e.title)}</div>
           <div class="event-desc">${escapeHtml(e.description)}</div>
           <div class="event-meta">Dibuat oleh ${escapeHtml(e.createdByName)}</div>
+          <span class="event-view-more">Lihat detail →</span>
         </div>
       </div>
     `;
@@ -365,6 +420,9 @@ function initEventsPage(){
   function draw(data){
     const upcoming = data.upcoming || [];
     const past = data.past || [];
+
+    eventsById = {};
+    [...upcoming, ...past].forEach((e) => { eventsById[e.id] = e; });
 
     if (!upcoming.length && !past.length) {
       content.innerHTML = `<div class="state-box"><span class="emoji">📅</span>Belum ada event yang tercatat.<br/>Nantikan event seru dari Cosmic Corner!</div>`;
