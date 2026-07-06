@@ -1,11 +1,19 @@
 const Event = require('../models/Event');
 const { ensureAdmin } = require('../utils/admin');
-const { createGameEmbed, COLORS } = require('../utils/theme');
+const { createGameEmbed, createLinkButton, COLORS } = require('../utils/theme');
+
+const SITE_URL = process.env.SITE_URL || 'https://cosmiccorner.up.railway.app';
 
 function parseEventDate(raw) {
-  // Terima format "YYYY-MM-DD HH:mm" (WIB dianggap waktu server/lokal)
-  const cleaned = String(raw || '').trim().replace(' ', 'T');
-  const d = new Date(cleaned);
+  // Terima format "YYYY-MM-DD HH:mm", SELALU dianggap WIB (UTC+7)
+  // — apapun timezone server hosting-nya (Railway dkk biasanya UTC).
+  const cleaned = String(raw || '').trim();
+  const match = cleaned.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})$/);
+  if (!match) return null;
+
+  const [, y, mo, da, h, mi] = match;
+  const isoWithOffset = `${y}-${mo}-${da}T${h}:${mi}:00+07:00`;
+  const d = new Date(isoWithOffset);
   if (Number.isNaN(d.getTime())) return null;
   return d;
 }
@@ -85,10 +93,11 @@ module.exports = {
           image: image || undefined,
           fields: [
             { name: '🗓️ Waktu', value: `<t:${Math.floor(date.getTime() / 1000)}:F> (<t:${Math.floor(date.getTime() / 1000)}:R>)`, inline: false },
-            { name: '📌 Info Lengkap', value: 'Cek juga halaman **Events** di website Cosmic Corner!', inline: false },
+            { name: '📌 Info Lengkap', value: 'Klik tombol di bawah buat liat detail event di website Cosmic Corner!', inline: false },
           ],
           footer: `Diumumkan oleh ${msg.member?.displayName || msg.author.username}`,
         })],
+        components: createLinkButton(`${SITE_URL}/events`, 'Lihat di Web', '🌐'),
       });
     }
 
