@@ -366,3 +366,147 @@ footer a{ color:inherit; }
   .event-grid{ grid-template-columns:1fr; }
   .team-grid{ grid-template-columns:repeat(2, 1fr); }
 }
+
+/* ============================================================
+   Homepage additions — animated background orbs, About section,
+   and Discord invite CTAs
+   ============================================================ */
+
+/* ---------- Floating nebula background ---------- */
+.bg-orbs{
+  position:fixed; inset:0; z-index:0;
+  overflow:hidden; pointer-events:none;
+}
+.orb{
+  position:absolute; border-radius:50%;
+  filter:blur(90px);
+  opacity:0.38;
+  will-change:transform;
+}
+.orb-1{
+  width:440px; height:440px;
+  top:-140px; left:-120px;
+  background:radial-gradient(circle, color-mix(in srgb, var(--accent) 85%, white), transparent 70%);
+  animation:orbFloat1 24s ease-in-out infinite;
+}
+.orb-2{
+  width:380px; height:380px;
+  bottom:-160px; right:-100px;
+  background:radial-gradient(circle, #8b5cf6, transparent 70%);
+  animation:orbFloat2 28s ease-in-out infinite;
+}
+.orb-3{
+  width:300px; height:300px;
+  top:38%; left:58%;
+  background:radial-gradient(circle, #fb7185, transparent 70%);
+  animation:orbFloat3 32s ease-in-out infinite;
+}
+@keyframes orbFloat1{
+  0%,100%{ transform:translate(0,0) scale(1); }
+  50%{ transform:translate(70px,90px) scale(1.08); }
+}
+@keyframes orbFloat2{
+  0%,100%{ transform:translate(0,0) scale(1); }
+  50%{ transform:translate(-80px,-60px) scale(1.1); }
+}
+@keyframes orbFloat3{
+  0%,100%{ transform:translate(0,0) scale(1); }
+  50%{ transform:translate(-50px,40px) scale(1.18); }
+}
+@media (prefers-reduced-motion:reduce){
+  .orb{ animation:none; }
+}
+
+/* ---------- Invite CTA button ---------- */
+.btn-invite{
+  display:inline-flex; align-items:center; gap:8px;
+  text-decoration:none;
+  font-family:var(--font-body); font-weight:700; font-size:14px;
+  color:#05060f;
+  padding:12px 22px;
+  border-radius:999px;
+  background:linear-gradient(120deg, var(--accent), #8b5cf6);
+  box-shadow:0 12px 30px -10px color-mix(in srgb, var(--accent) 70%, transparent);
+  transition:transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  white-space:nowrap;
+}
+.btn-invite:hover{
+  transform:translateY(-2px);
+  filter:brightness(1.06);
+  box-shadow:0 16px 36px -8px color-mix(in srgb, var(--accent) 80%, transparent);
+}
+.btn-invite:active{ transform:translateY(0); }
+.btn-invite-icon{ font-size:15px; }
+
+.btn-invite-nav{ padding:9px 18px; font-size:12.5px; flex-shrink:0; }
+.btn-invite-hero{ margin-top:6px; padding:13px 26px; font-size:14.5px; }
+
+.footer-invite{ margin-top:8px; }
+.footer-invite a{
+  color:var(--accent); text-decoration:none; font-weight:600;
+}
+.footer-invite a:hover{ text-decoration:underline; }
+
+/* ---------- About / story section ---------- */
+.about-section{
+  margin:0 0 44px;
+  padding:36px 30px 34px;
+  border-radius:var(--radius-lg);
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-top:2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  backdrop-filter:blur(14px);
+  box-shadow:var(--shadow-card);
+  text-align:center;
+}
+.section-badge{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:6px 14px; border-radius:999px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid var(--border-strong);
+  font-family:var(--font-mono);
+  font-size:11px; letter-spacing:0.08em; text-transform:uppercase;
+  color:var(--text-1); font-weight:500;
+  margin-bottom:14px;
+}
+.about-title{
+  font-family:var(--font-display);
+  font-size:clamp(22px, 3.4vw, 30px);
+  font-weight:700; margin:0 0 14px;
+  letter-spacing:-0.01em;
+  color:var(--text-0);
+}
+.about-lead{
+  color:var(--text-1); font-size:14.5px; line-height:1.7;
+  max-width:640px; margin:0 auto 30px;
+}
+.story-grid{
+  display:grid; grid-template-columns:repeat(3, 1fr); gap:14px;
+  margin-bottom:30px; text-align:left;
+}
+.story-card{
+  background:rgba(255,255,255,0.03);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:20px 18px;
+  transition:transform 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+}
+.story-card:hover{
+  transform:translateY(-3px);
+  background:rgba(255,255,255,0.045);
+  border-color:var(--border-strong);
+}
+.story-icon{ font-size:24px; display:block; margin-bottom:10px; }
+.story-card h3{
+  font-family:var(--font-display); font-size:15px; font-weight:700;
+  margin:0 0 8px; color:var(--text-0);
+}
+.story-card p{ font-size:13px; color:var(--text-2); line-height:1.6; margin:0; }
+
+/* ---------- Responsive ---------- */
+@media (max-width:640px){
+  .story-grid{ grid-template-columns:1fr; }
+  .about-section{ padding:28px 20px; }
+  .btn-invite-nav{ display:none; }
+  .topnav{ position:relative; }
+}
