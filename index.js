@@ -45,53 +45,6 @@ const {
   toggleLoop,
   pauseResume,
   adjustVolume,
-  queueView,const dns = require('dns');
-dns.setDefaultResultOrder('ipv4first');
-dns.setServers(['1.1.1.1', '8.8.8.8']);
-
-require('dotenv').config();
-
-process.env.DISCORD_DISABLE_VOICE_CONNECTION_TIMEOUT = 'true';
-
-const fs = require('fs');
-const mongoose = require('mongoose');
-mongoose.set('bufferCommands', false);
-
-const {
-  Client,
-  GatewayIntentBits,
-  Collection,
-  REST,
-  Routes,
-  SlashCommandBuilder,
-  MessageFlags,
-} = require('discord.js');
-
-const { generateDependencyReport } = require('@discordjs/voice');
-const { createGameEmbed, COLORS } = require('./utils/theme');
-
-const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildVoiceStates,
-    GatewayIntentBits.GuildMembers, // dibutuhkan buat halaman Struktur Tim (baca role member)
-  ],
-});
-
-client.commands = new Collection();
-
-let mongoReady = false;
-const GuildConfig = require('./models/GuildConfig');
-const voiceSessions = new Map();
-
-const {
-  skip,
-  stop,
-  toggleLoop,
-  pauseResume,
-  adjustVolume,
   queueView,
   nowPlaying,
 } = require('./utils/music');
@@ -1779,4 +1732,3 @@ function startApiServer() {
     process.exit(1);
   }
 })();
-
