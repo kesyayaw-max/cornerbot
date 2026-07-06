@@ -334,7 +334,11 @@ function formatEventDate(iso){
   if (!iso) return '-';
   try {
     const d = new Date(iso);
-    return d.toLocaleString('id-ID', { weekday:'short', day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    return d.toLocaleString('id-ID', {
+      weekday:'short', day:'numeric', month:'short', year:'numeric',
+      hour:'2-digit', minute:'2-digit',
+      timeZone: 'Asia/Jakarta',
+    }) + ' WIB';
   } catch { return '-'; }
 }
 
