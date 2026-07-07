@@ -1390,6 +1390,64 @@ function displayName(u) {
   return u.displayName || u.username || (u.userId ? `User ${String(u.userId).slice(-4)}` : 'Unknown');
 }
 
+function getISOWeekNumber(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = (d.getUTCDay() + 6) % 7;
+  d.setUTCDate(d.getUTCDate() - dayNum + 3);
+  const firstThursday = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
+  const diff = d - firstThursday;
+  return 1 + Math.round(diff / (7 * 24 * 3600 * 1000));
+}
+
+async function buildMemberOfWeekPayload() {
+  const users = await User.find({}).lean();
+  if (!users.length) return { member: null, weekNumber: getISOWeekNumber(new Date()) };
+
+  // Skor gabungan biar yang aktif di berbagai aspek (bukan cuma satu kategori) yang menonjol
+  const scored = users
+    .map((u) => {
+      const voiceMinutes = u.voice?.totalMinutes || 0;
+      const coin = u.coin || 0;
+      const level = u.level || 1;
+      const wins = u.wins || 0;
+      const petCount = (u.pets || []).length;
+      const score = voiceMinutes * 1 + coin * 0.05 + level * 40 + wins * 15 + petCount * 8;
+      return { u, score, voiceMinutes, coin, level, wins, petCount };
+    })
+    .filter((s) => s.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 10);
+
+  if (!scored.length) return { member: null, weekNumber: getISOWeekNumber(new Date()) };
+
+  const weekNumber = getISOWeekNumber(new Date());
+  const picked = scored[weekNumber % scored.length];
+  const u = picked.u;
+
+  const reasons = [
+    { label: `${formatVoiceTime(picked.voiceMinutes)} ngobrol di voice`, weight: picked.voiceMinutes, active: picked.voiceMinutes > 0 },
+    { label: `${picked.coin.toLocaleString('id-ID')} coin terkumpul`, weight: picked.coin * 0.05, active: picked.coin > 0 },
+    { label: `Level ${picked.level} tercapai`, weight: picked.level * 40, active: picked.level > 1 },
+    { label: `${picked.wins} kemenangan battle`, weight: picked.wins * 15, active: picked.wins > 0 },
+    { label: `${picked.petCount} pet dikoleksi`, weight: picked.petCount * 8, active: picked.petCount > 0 },
+  ].filter((r) => r.active).sort((a, b) => b.weight - a.weight);
+
+  return {
+    weekNumber,
+    member: {
+      userId: u.userId,
+      name: displayName(u),
+      avatar: u.avatar || null,
+      level: picked.level,
+      coin: picked.coin,
+      voiceTime: formatVoiceTime(picked.voiceMinutes),
+      petCount: picked.petCount,
+      wins: picked.wins,
+      highlight: reasons[0]?.label || 'Member paling aktif minggu ini',
+    },
+  };
+}
+
 async function buildVoiceLeaderboardPayload() {
   const users = await User.find({
     'voice.totalMinutes': { $gt: 0 },
@@ -1624,6 +1682,19 @@ apiApp.get('/api/stats', async (req, res) => {
       return res.status(503).json({ ok: false, error: 'MongoDB belum tersambung' });
     }
     const payload = await buildStatsPayload();
+    return res.json({ ok: true, updatedAt: new Date().toISOString(), ...payload });
+  } catch (err) {
+    console.error('API ERROR:', err);
+    return res.status(500).json({ ok: false, error: 'API error', message: err.message });
+  }
+});
+
+apiApp.get('/api/member-of-week', async (req, res) => {
+  try {
+    if (!mongoReady) {
+      return res.status(503).json({ ok: false, error: 'MongoDB belum tersambung' });
+    }
+    const payload = await buildMemberOfWeekPayload();
     return res.json({ ok: true, updatedAt: new Date().toISOString(), ...payload });
   } catch (err) {
     console.error('API ERROR:', err);
