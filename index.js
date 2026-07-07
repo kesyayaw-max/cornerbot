@@ -9,6 +9,7 @@ process.env.DISCORD_DISABLE_VOICE_CONNECTION_TIMEOUT = 'true';
 const fs = require('fs');
 const mongoose = require('mongoose');
 mongoose.set('bufferCommands', false);
+const { safeReply } = require('./utils/safeReply');
 
 const {
   Client,
@@ -833,13 +834,13 @@ client.on('messageCreate', async (msg) => {
 
   try {
     if (!mongoReady) {
-      return await msg.reply('❌ Database belum tersambung. Coba lagi sebentar ya.');
+      return await safeReply(msg, '❌ Database belum tersambung. Coba lagi sebentar ya.');
     }
 
     await command.execute(msg, args);
   } catch (err) {
     console.error(err);
-    await msg.reply('❌ Terjadi error saat menjalankan command.').catch(() => {});
+    await safeReply(msg, '❌ Terjadi error saat menjalankan command.').catch(() => {});
   }
 });
 
@@ -1822,4 +1823,3 @@ function startApiServer() {
     process.exit(1);
   }
 })();
-
