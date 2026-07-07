@@ -1365,7 +1365,7 @@ const apiApp = express();
 // Serve the multi-page dashboard website (public/*.html + public/assets)
 apiApp.use(express.static(path.join(__dirname, 'public')));
 
-const DASHBOARD_PAGES = ['voice', 'coin', 'level', 'pets', 'events', 'team'];
+const DASHBOARD_PAGES = ['voice', 'coin', 'level', 'pets', 'events', 'team', 'shop'];
 for (const page of DASHBOARD_PAGES) {
   apiApp.get(`/${page}`, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', `${page}.html`));
@@ -1609,6 +1609,8 @@ async function buildStatsPayload() {
   return {
     memberCount: guild?.memberCount || 0,
     guildName: guild?.name || null,
+    boostCount: guild?.premiumSubscriptionCount || 0,
+    boostTier: guild?.premiumTier || 0,
     totalPlayers: agg?.totalPlayers || 0,
     totalCoin: agg?.totalCoin || 0,
     totalVoiceHours: Math.floor((agg?.totalVoiceMinutes || 0) / 60),
@@ -1623,6 +1625,23 @@ apiApp.get('/api/stats', async (req, res) => {
     }
     const payload = await buildStatsPayload();
     return res.json({ ok: true, updatedAt: new Date().toISOString(), ...payload });
+  } catch (err) {
+    console.error('API ERROR:', err);
+    return res.status(500).json({ ok: false, error: 'API error', message: err.message });
+  }
+});
+
+apiApp.get('/api/shop', (req, res) => {
+  try {
+    const { ITEM_DEFS } = require('./utils/gameAssets');
+    const items = Object.values(ITEM_DEFS).map(item => ({
+      key: item.key,
+      name: item.name,
+      price: item.price,
+      emoji: item.emoji,
+      description: item.description,
+    }));
+    return res.json({ ok: true, updatedAt: new Date().toISOString(), items });
   } catch (err) {
     console.error('API ERROR:', err);
     return res.status(500).json({ ok: false, error: 'API error', message: err.message });
@@ -1732,3 +1751,4 @@ function startApiServer() {
     process.exit(1);
   }
 })();
+
