@@ -71,6 +71,8 @@ const commandDescriptions = {
   broadcast: 'Broadcast pesan ke channel server',
   voicelog: 'Atur channel voice log server',
   welcome: 'Atur channel welcome member baru',
+  welcomelinks: 'Atur channel link (rules/event/announcement/report/verify) di pesan welcome',
+  welcomepreview: 'Lihat pratinjau pesan welcome tanpa perlu member baru join',
   setemote: 'Ganti emote custom buat minigame',
   buy: 'Beli item dari shop',
   catch: 'Tangkap pet baru',
@@ -272,6 +274,48 @@ function addCommandOptions(builder, commandName) {
       );
   }
 
+  if (commandName === 'welcomelinks') {
+    builder
+      .addStringOption((opt) =>
+        opt
+          .setName('action')
+          .setDescription('Atur atau matikan link')
+          .setRequired(true)
+          .addChoices(
+            { name: 'set', value: 'set' },
+            { name: 'off', value: 'off' }
+          )
+      )
+      .addStringOption((opt) =>
+        opt
+          .setName('key')
+          .setDescription('Link mana yang mau diatur')
+          .setRequired(true)
+          .addChoices(
+            { name: 'rules', value: 'rules' },
+            { name: 'event', value: 'event' },
+            { name: 'announcement', value: 'announcement' },
+            { name: 'report', value: 'report' },
+            { name: 'verifyfemale', value: 'verifyfemale' }
+          )
+      )
+      .addChannelOption((opt) =>
+        opt
+          .setName('channel')
+          .setDescription('Channel tujuan (wajib kalau action = set)')
+          .setRequired(false)
+      );
+  }
+
+  if (commandName === 'welcomepreview') {
+    builder.addUserOption((opt) =>
+      opt
+        .setName('user')
+        .setDescription('Preview pakai avatar/nama user ini (default: diri sendiri)')
+        .setRequired(false)
+    );
+  }
+
   if (commandName === 'broadcast') {
     builder
       .addStringOption((opt) =>
@@ -360,7 +404,7 @@ const slashStructure = {
   main: ['start', 'dashboard', 'profile', 'balance', 'daily', 'shop', 'buy', 'buybox', 'lootbox', 'inventory', 'leaderboard', 'rank', 'help', 'achievements'],
   game: ['hunt', 'fishing', 'coinflip', 'dice', 'rps', 'slot', 'blackjack', 'quest', 'dungeon', 'boss', 'pvp'],
   pet: ['catch', 'pets', 'petequip', 'petbattle'],
-  admin: ['adminpanel', 'admincash', 'broadcast', 'voicelog', 'welcome', 'setemote', 'resetvoice'],
+  admin: ['adminpanel', 'admincash', 'broadcast', 'voicelog', 'welcome', 'welcomelinks', 'welcomepreview', 'setemote', 'resetvoice'],
   music: ['play', 'queue', 'nowplaying', 'skip', 'loop', 'stop', 'volume'],
 };
 
@@ -1225,6 +1269,17 @@ client.on('interactionCreate', async (interaction) => {
         if (channel) args.push(`<#${channel.id}>`);
       }
 
+      if (subcommand === 'welcomelinks') {
+        args.push(interaction.options.getString('action'));
+        args.push(interaction.options.getString('key'));
+        const channel = interaction.options.getChannel('channel');
+        if (channel) args.push(`<#${channel.id}>`);
+      }
+
+      if (subcommand === 'welcomepreview') {
+        fakeMsg.targetUser = interaction.options.getUser('user');
+      }
+
       if (subcommand === 'setemote') {
         args.push(interaction.options.getString('key'));
         args.push(interaction.options.getString('emoji'));
@@ -1447,28 +1502,11 @@ client.on('guildMemberAdd', async (member) => {
     const channel = member.guild.channels.cache.get(channelId);
     if (!channel || !channel.isTextBased()) return;
 
-    const artUtil = require('./utils/art');
     const memberCount = member.guild.memberCount || 0;
-    const art = await artUtil.welcomeArtAttachment(member, memberCount, config?.customEmotes?.welcome || null);
+    const { buildWelcomeMessagePayload } = require('./utils/welcomeMessage');
+    const payload = await buildWelcomeMessagePayload(member, memberCount, config?.welcomeLinks || {});
 
-    await channel.send({
-      content: `👋 Selamat datang, ${member}!`,
-      embeds: [
-        createGameEmbed({
-          title: '🚀 Member Baru Bergabung!',
-          description: `${member} baru saja join **${member.guild.name}**. Yuk sambut!`,
-          color: COLORS.success,
-          thumbnail: member.user.displayAvatarURL({ size: 256 }),
-          image: artUtil.attachmentImageUrl(art),
-          fields: [
-            { name: '👥 Member Ke-', value: `${memberCount}`, inline: true },
-            { name: '📅 Join Pada', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: true },
-          ],
-          footer: 'Cosmic Corner Bot • Welcome',
-        }),
-      ],
-      files: [art],
-    }).catch(() => {});
+    await channel.send(payload).catch(() => {});
   } catch (err) {
     console.error('guildMemberAdd error:', err);
   }
