@@ -70,6 +70,8 @@ const commandDescriptions = {
   boss: 'Lawan boss untuk hadiah coin',
   broadcast: 'Broadcast pesan ke channel server',
   voicelog: 'Atur channel voice log server',
+  welcome: 'Atur channel welcome member baru',
+  setemote: 'Ganti emote custom buat minigame',
   buy: 'Beli item dari shop',
   catch: 'Tangkap pet baru',
   coinflip: 'Game coinflip',
@@ -226,6 +228,50 @@ function addCommandOptions(builder, commandName) {
       );
   }
 
+  if (commandName === 'welcome') {
+    builder
+      .addStringOption((opt) =>
+        opt
+          .setName('action')
+          .setDescription('Atur welcome message')
+          .setRequired(true)
+          .addChoices(
+            { name: 'set', value: 'set' },
+            { name: 'off', value: 'off' }
+          )
+      )
+      .addChannelOption((opt) =>
+        opt
+          .setName('channel')
+          .setDescription('Channel tujuan welcome message')
+          .setRequired(false)
+      );
+  }
+
+  if (commandName === 'setemote') {
+    builder
+      .addStringOption((opt) =>
+        opt
+          .setName('key')
+          .setDescription('Emote yang mau diganti')
+          .setRequired(true)
+          .addChoices(
+            { name: 'hunt', value: 'hunt' },
+            { name: 'fishing', value: 'fishing' },
+            { name: 'boss', value: 'boss' },
+            { name: 'shiny', value: 'shiny' },
+            { name: 'crit', value: 'crit' },
+            { name: 'welcome', value: 'welcome' }
+          )
+      )
+      .addStringOption((opt) =>
+        opt
+          .setName('emoji')
+          .setDescription('Emoji pengganti (custom atau unicode)')
+          .setRequired(true)
+      );
+  }
+
   if (commandName === 'broadcast') {
     builder
       .addStringOption((opt) =>
@@ -314,7 +360,7 @@ const slashStructure = {
   main: ['start', 'dashboard', 'profile', 'balance', 'daily', 'shop', 'buy', 'buybox', 'lootbox', 'inventory', 'leaderboard', 'rank', 'help', 'achievements'],
   game: ['hunt', 'fishing', 'coinflip', 'dice', 'rps', 'slot', 'blackjack', 'quest', 'dungeon', 'boss', 'pvp'],
   pet: ['catch', 'pets', 'petequip', 'petbattle'],
-  admin: ['adminpanel', 'admincash', 'broadcast', 'voicelog', 'resetvoice'],
+  admin: ['adminpanel', 'admincash', 'broadcast', 'voicelog', 'welcome', 'setemote', 'resetvoice'],
   music: ['play', 'queue', 'nowplaying', 'skip', 'loop', 'stop', 'volume'],
 };
 
@@ -900,6 +946,27 @@ client.on('interactionCreate', async (interaction) => {
       if (customId === 'music:volup') return adjustVolume(fakeMsg, 10);
       if (customId === 'music:voldown') return adjustVolume(fakeMsg, -10);
 
+      if (customId.startsWith('hunt:')) {
+        const [, choice, ownerId] = customId.split(':');
+        if (ownerId && ownerId !== interaction.user.id) return respondNotOwner();
+        const huntCommand = require('./commands/hunt');
+        return huntCommand.handleChoice(interaction, choice);
+      }
+
+      if (customId.startsWith('fishing:')) {
+        const [, choice, ownerId] = customId.split(':');
+        if (ownerId && ownerId !== interaction.user.id) return respondNotOwner();
+        const fishingCommand = require('./commands/fishing');
+        return fishingCommand.handleChoice(interaction, choice);
+      }
+
+      if (customId.startsWith('boss:')) {
+        const [, action, ownerId] = customId.split(':');
+        if (ownerId && ownerId !== interaction.user.id) return respondNotOwner();
+        const bossCommand = require('./commands/boss');
+        return bossCommand.handleAction(interaction, action);
+      }
+
       const buttonMsg = makeButtonMsg();
 
       if (customId.startsWith('nav:')) {
@@ -1152,6 +1219,17 @@ client.on('interactionCreate', async (interaction) => {
         if (channel) args.push(`<#${channel.id}>`);
       }
 
+      if (subcommand === 'welcome') {
+        args.push(interaction.options.getString('action'));
+        const channel = interaction.options.getChannel('channel');
+        if (channel) args.push(`<#${channel.id}>`);
+      }
+
+      if (subcommand === 'setemote') {
+        args.push(interaction.options.getString('key'));
+        args.push(interaction.options.getString('emoji'));
+      }
+
       if (subcommand === 'admincash') {
         args.push(interaction.options.getString('action'));
         args.push(interaction.options.getInteger('amount'));
@@ -1351,6 +1429,48 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
     }
   } catch (error) {
     console.error('voiceStateUpdate error:', error);
+  }
+});
+
+client.on('guildMemberAdd', async (member) => {
+  try {
+    if (member.user?.bot) return;
+    if (!mongoReady) return;
+
+    const guildId = member.guild?.id;
+    if (!guildId) return;
+
+    const config = await GuildConfig.findOne({ guildId }).lean();
+    const channelId = config?.welcomeChannelId;
+    if (!channelId) return;
+
+    const channel = member.guild.channels.cache.get(channelId);
+    if (!channel || !channel.isTextBased()) return;
+
+    const artUtil = require('./utils/art');
+    const memberCount = member.guild.memberCount || 0;
+    const art = await artUtil.welcomeArtAttachment(member, memberCount, config?.customEmotes?.welcome || null);
+
+    await channel.send({
+      content: `👋 Selamat datang, ${member}!`,
+      embeds: [
+        createGameEmbed({
+          title: '🚀 Member Baru Bergabung!',
+          description: `${member} baru saja join **${member.guild.name}**. Yuk sambut!`,
+          color: COLORS.success,
+          thumbnail: member.user.displayAvatarURL({ size: 256 }),
+          image: artUtil.attachmentImageUrl(art),
+          fields: [
+            { name: '👥 Member Ke-', value: `${memberCount}`, inline: true },
+            { name: '📅 Join Pada', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: true },
+          ],
+          footer: 'Cosmic Corner Bot • Welcome',
+        }),
+      ],
+      files: [art],
+    }).catch(() => {});
+  } catch (err) {
+    console.error('guildMemberAdd error:', err);
   }
 });
 
