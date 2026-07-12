@@ -1,5 +1,6 @@
 
 const { AttachmentBuilder } = require('discord.js');
+const { Resvg } = require('@resvg/resvg-js');
 
 function esc(text = '') {
   return String(text)
@@ -93,7 +94,16 @@ function buildDashboardSvg({ title, subtitle, leftStats = [], rightStats = [], a
 }
 
 function makeSvgAttachment(name, svgText) {
-  return new AttachmentBuilder(Buffer.from(svgText), { name });
+  const pngName = name.replace(/\.svg$/i, '.png');
+  try {
+    const resvg = new Resvg(svgText);
+    const pngBuffer = resvg.render().asPng();
+    return new AttachmentBuilder(pngBuffer, { name: pngName });
+  } catch (err) {
+    // Fallback so a rasterization hiccup never crashes the command outright.
+    console.error('SVG->PNG render error:', err);
+    return new AttachmentBuilder(Buffer.from(svgText), { name });
+  }
 }
 
 function petArtAttachment(pet) {
